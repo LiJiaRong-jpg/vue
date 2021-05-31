@@ -60,9 +60,9 @@ export default {
         params: {
           _gp: 'admin',
           _mt: 'login',
-          username: that.account,
-          password: that.pass,
-          verifyCode: that.token
+          username: that.account, // 用户名
+          password: that.pass, // 密码
+          verifyCode: that.token // 验证码
         }
       }).then(function (data) {
         if (data.data.errmsg === '成功') {

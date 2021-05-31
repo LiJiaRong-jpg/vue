@@ -2,14 +2,14 @@
   <div class="dashboard"
     style="width: 100%;overflow-y: auto; box-sizing: border-box;padding: 20px;background-color: #E9EEF3;">
     <div style="width: 100%;overflow: hidden;margin-bottom: 50px;">
-      <div class="survey">
+      <div class="survey" style="float: left;">
         <div class="quantity box">
           <div class="iconbox">
             <i class="el-icon-user-solid"></i>
           </div>
           <div class="quantity_goods">
             <span class="txt">商品数量</span>
-            <span class="num">21</span>
+            <span>{{goodsCount}}</span>
           </div>
         </div>
         <div class="manifest box">
@@ -18,16 +18,16 @@
           </div>
           <div class="quantity_goods">
             <span class="txt">未发货单</span>
-            <span class="num">315</span>
+            <span>{{waitStockCount}}</span>
           </div>
         </div>
       </div>
-      <div ref="orders" style="width: 748px;height: 350px;float: left;margin-left: 100px;margin-top: 40px;">
+      <div ref="orderChart" style="width: 748px;height: 350px;float: left;margin-top: 40px;">
       </div>
     </div>
-    <!-- <div ref="amount" style="width: 470px;height: 400px;margin-left: 30px;float: left;"></div> -->
+    <div ref="amount" style="width: 470px;height: 400px;margin-left: 30px;float: left;"></div>
     <div ref="region" style="width: 231px;height: 400px;float: left;margin-left: 50px;"></div>
-    <!-- <div ref="channel" style="width: 231px;height: 400px;float: left;margin-left: 50px;"></div> -->
+    <div ref="order" style="width: 231px;height: 400px;float: left;margin-left: 50px;"></div>
   </div>
 </template>
 
@@ -35,9 +35,8 @@
 export default {
   data () {
     return {
-      shuJu: null,
-      goodsCount: 0,
-      waitStockCount: 0
+      goodsCount: 0, // 商品数量
+      waitStockCount: 0 // 未发货单
     }
   },
   mounted () {
@@ -46,9 +45,6 @@ export default {
   methods: {
     drawLine () {
       // 基于准备好的dom，初始化echarts实例
-      // const myChart = this.$echarts.init(this.$refs.orders)
-      // const amount = this.$echarts.init(this.$refs.amount)
-      // const channel = this.$echarts.init(this.$refs.channel)
 
       const that = this
       const token = window.sessionStorage.getItem('token')
@@ -61,111 +57,145 @@ export default {
           _mt: 'integral'
         }
       }).then(function (reds) {
+        that.waitStockCount = reds.data.data.waitStockCount
+        that.goodsCount = reds.data.data.goodsCount
+        // 创建容器
+        const orderChart = that.$echarts.init(that.$refs.orderChart)
         const region = that.$echarts.init(that.$refs.region)
-
-        const option3 = {
-          series: [{
-            name: '访问来源',
-            type: 'pie',
-            radius: '50%',
-            data: reds.data.data.area,
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
+        const sumChart = that.$echarts.init(that.$refs.amount)
+        const channelChart = that.$echarts.init(that.$refs.order)
+        // 生产数据
+        const option1 = {
+          title: { text: '7日订单' },
+          legend: {
+            data: ['订单数'],
+            right: 1
+          },
+          yAxis: [
+            {
+              name: '订单数',
+              type: 'value',
+              axisLine: {
+                show: false
+              },
+              axisTick: {
+                show: false
+              },
+              axisLabel: {
+                color: '#666',
+                fontSize: 12
               }
             }
-          }]
+          ],
+          xAxis: {
+            axisTick: {
+              show: false
+            },
+            axisLabel: {
+              color: '#666',
+              fontSize: 12,
+              margin: 12
+            },
+            data: reds.data.data.daysOrder[0]
+          },
+          series: [
+            {
+              name: '订单数',
+              yAxisIndex: 0,
+              data: [820, 932, 901, 934, 1290, 1330, 1320], // response.data.data.daysOrder[1],
+              type: 'bar',
+              color: '#00B5FF',
+              barWidth: 30
+            }
+          ]
         }
-
+        const option2 = {
+          title: { text: '7日成交金额' },
+          legend: {
+            data: ['订单数'],
+            right: 1
+          },
+          yAxis: [
+            {
+              name: '订单数',
+              type: 'value',
+              axisLine: {
+                show: false
+              },
+              axisTick: {
+                show: false
+              },
+              axisLabel: {
+                color: '#666',
+                fontSize: 12
+              }
+            }
+          ],
+          xAxis: {
+            axisTick: {
+              show: false
+            },
+            axisLabel: {
+              color: '#666',
+              fontSize: 12,
+              margin: 12
+            },
+            data: reds.data.data.daysSum[0]
+          },
+          series: [
+            {
+              name: '订单数',
+              yAxisIndex: 0,
+              data: [820, 932, 901, 934, 1290, 1330, 1320], // response.data.data.daysSum[1],
+              type: 'line',
+              color: '#20B2AA'
+            }
+          ]
+        }
+        const option3 = {
+          title: { text: '订单地区分布' },
+          legend: {
+            data: ['地区分布'],
+            right: 1,
+            color: '#20B2AA'
+          },
+          series: [
+            {
+              type: 'pie',
+              name: '地区分布',
+              data: reds.data.data.area
+            }
+          ]
+        }
+        const option4 = {
+          title: { text: '订单渠道分布' },
+          legend: {
+            data: ['渠道分布'],
+            right: 1,
+            color: '#20B2AA'
+          },
+          series: [
+            {
+              type: 'pie',
+              name: '地区分布',
+              data: reds.data.data.channel,
+              emphasis: {
+                itemStyle: {
+                  shadowBlur: 10,
+                  shadowOffsetX: 0,
+                  shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+              }
+            }
+          ]
+        }
+        // 渲染数据
+        orderChart.setOption(option1)
+        sumChart.setOption(option2)
         region.setOption(option3)
+        channelChart.setOption(option4)
       })
-      // 绘制图表
-      // myChart.setOption(option)
-      // amount.setOption(option2)
-      // channel.setOption(option4)
-      // const region = this.$echarts.init(this.$refs.region)
-      // const option3 = {
-      //   series: [{
-      //     name: '访问来源',
-      //     type: 'pie',
-      //     radius: '50%',
-      //     data: [{
-      //       key: '重庆',
-      //       name: '重庆',
-      //       value: 94
-      //     }, {
-      //       key: '浙江省',
-      //       name: '浙江省',
-      //       value: 19
-      //     }, {
-      //       key: '北京',
-      //       name: '北京',
-      //       value: 36
-      //     }, {
-      //       key: '山东省',
-      //       name: '山东省',
-      //       value: 1
-      //     }, {
-      //       key: '广东省',
-      //       name: '广东省',
-      //       value: 114
-      //     }, {
-      //       key: '河北省',
-      //       name: '河北省',
-      //       value: 51
-      //     }, {
-      //       key: '江西省',
-      //       name: '江西省',
-      //       value: 2
-      //     }, {
-      //       key: '内蒙古自治区',
-      //       name: '内蒙古自治区',
-      //       value: 30
-      //     }, {
-      //       key: '北京市',
-      //       name: '北京市',
-      //       value: 217
-      //     }, {
-      //       key: '天津',
-      //       name: '天津',
-      //       value: 32
-      //     }, {
-      //       key: '宁夏回族自治区',
-      //       name: '宁夏回族自治区',
-      //       value: 14
-      //     }, {
-      //       key: '山西省',
-      //       name: '山西省',
-      //       value: 52
-      //     }, {
-      //       key: '天津市',
-      //       name: '天津市',
-      //       value: 24
-      //     }, {
-      //       key: '湖南',
-      //       name: '湖南',
-      //       value: 6
-      //     }, {
-      //       key: '湖南省',
-      //       name: '湖南省',
-      //       value: 21
-      //     }],
-      //     emphasis: {
-      //       itemStyle: {
-      //         shadowBlur: 10,
-      //         shadowOffsetX: 0,
-      //         shadowColor: 'rgba(0, 0, 0, 0.5)'
-      //       }
-      //     }
-      //   }]
-      // }
-      // region.setOption(option3)
     }
-  },
-  beforeCreate () {
-
   }
 }
 </script>
@@ -176,7 +206,7 @@ export default {
     height: 280px;
     position: relative;
     float: left;
-    margin-top: 18px;
+    margin-top: 48px;
     margin-left: 30px;
   }
 

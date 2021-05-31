@@ -153,7 +153,7 @@ export default {
           titl: '管理员'
         }, {
           path: '/system/rolemanage',
-          title: '系统管理>优惠劵管理',
+          title: '系统管理>角色管理',
           titl: '角色管理'
         }]
       }]

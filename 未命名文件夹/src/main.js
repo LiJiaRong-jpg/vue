@@ -9,6 +9,8 @@ import ElementUI, { Message } from 'element-ui'
 
 import echarts from 'echarts'
 
+import global from './store/global.js'
+
 Vue.config.productionTip = false
 
 Vue.use(ElementUI)
@@ -16,6 +18,7 @@ Vue.use(VueAxios, axios)
 
 Vue.prototype.$message = Message
 Vue.prototype.$echarts = echarts
+Vue.prototype.global = global
 
 router.beforeEach((to, from, next) => {
   if (to.path === '/login') { // 去的页面是否去的是登录页面
@@ -48,6 +51,21 @@ router.beforeEach((to, from, next) => {
     }
   }
 })
+
+axios.interceptors.request.use(
+  config => {
+  // 判断是否存在token，如果存在的话，则每个http header都加上token
+  // get没用qs转formData,他就有token
+  // post用qs转formData,他就没有token
+    const token = sessionStorage.getItem('token')
+    if (!config.headers.ADMINTOKEN) {
+      config.headers.ADMINTOKEN = token
+    }
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  })
 
 new Vue({
   router,

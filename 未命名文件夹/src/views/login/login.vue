@@ -36,8 +36,14 @@
             </template>
           </el-input>
         </div>
+        <div class="div">
+          <el-checkbox v-model="radio">记住密码</el-checkbox>
+        </div>
         <div @click="login" style="font-size: 18px;width: 58%;border: 1px solid rgb(64, 158, 255);color: rgb(64, 158, 255);cursor: pointer;margin: 20px 0 0 25%;padding: 10px 0px;">
           <i style="display: table;margin: auto;">登录</i>
+          </div>
+          <div style="color: #999;text-align: center;margin-top: 50px;">
+            <i>开发者：   xxx</i>
           </div>
       </div>
     </div>
@@ -48,9 +54,10 @@
 export default {
   data () {
     return {
-      account: 'admin',
-      pass: '123456',
-      token: '666666'
+      account: 'admin', // 用户名
+      pass: '123456', // 密码
+      token: '666666', // 验证码
+      radio: false // 记住密码
     }
   },
   methods: {
@@ -84,7 +91,7 @@ export default {
         }
       })
     },
-    ACCOUNT () {
+    ACCOUNT () { // 账号框失焦
       if (this.account.trim() === '') {
         this.$message({
           showClose: true,
@@ -93,7 +100,7 @@ export default {
         })
       }
     },
-    PASS () {
+    PASS () { // 密码框失焦
       if (this.pass.trim() === '') {
         this.$message({
           showClose: true,

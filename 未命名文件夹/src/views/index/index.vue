@@ -54,12 +54,16 @@
         </el-header>
 
         <el-main style="padding: 0;">
-        <div ref="qwer"
+        <!-- <div ref="qwer"
           style="position: absolute;background-color: white;z-index: 10;overflow-x: clip;width: 100%;border-bottom: 1px solid #dcdfe6;height: 40px;white-space: nowrap;"
           @mousewheel.prevent="mouse">
           <el-button v-for="(item,index) in arr" :key="index" style="padding: 5px 10px;margin: 5px 10px;"
             @click="Buttom(index)" @contextmenu.prevent.native="openMenu($event,index)">{{item.titl}}<i
               class="el-icon-close" @click="Dele(index)"></i></el-button>
+        </div> -->
+        <div>
+          <tabS :arr="arr" style="position: absolute;background-color: white;z-index: 10;overflow-x: clip;width: 100%;border-bottom: 1px solid #dcdfe6;height: 40px;white-space: nowrap;"
+          @mousewheel.prevent="mouse" @buttom='Buttom($event)' @openmenu="openMenu($event)" @dele="Dele($event)"></tabS>
         </div>
           <router-view></router-view>
         </el-main>
@@ -78,7 +82,11 @@
 </template>
 
 <script>
+import tabS from '../../components/tabS.vue'
 export default {
+  components: {
+    tabS
+  },
   data () {
     return {
       active: '2', // 默认展开
@@ -153,7 +161,7 @@ export default {
           titl: '管理员'
         }, {
           path: '/system/rolemanage',
-          title: '系统管理>角色管理',
+          title: '系统管理>优惠劵管理',
           titl: '角色管理'
         }]
       }]
@@ -310,19 +318,20 @@ export default {
       this.arr.splice(this.muen, 1) // 谁开启的右键菜单就移除谁
     },
     handleCommand (command) {
+      const that = this
       if (command === 'a') {
         console.log(command)
       } else {
         window.sessionStorage.removeItem('token') // 退出登录
-        this.$message({
-          showClose: true,
-          message: '退出成功',
-          type: 'success'
-        })
         this.$router.push({
           path: '/login'
         }).catch(err => {
           console.log(err)
+          that.$message({
+            showClose: true,
+            message: '退出成功',
+            type: 'success'
+          })
         })
       }
     }

@@ -70,6 +70,14 @@
 </template>
 
 <script>
+import {
+  addRole,
+  roleList,
+  roleUpdate,
+  roleDelete,
+  jurisdictionList,
+  roleJurisdiction
+} from '../../api/system/rolemanage.js'
 export default {
   data () {
     return {
@@ -78,7 +86,10 @@ export default {
         page: 1, // 页数
         limit: 10 // 每页几条
       },
-      tableData: '', // 返回数据
+      tableData: {
+        total: 0,
+        items: []
+      }, // 返回数据
       addRole: false, // 添加修改框显隐
       title: '', // 添加修改框标题
       roleForm: { // 添加或修改需要的两条数据
@@ -100,19 +111,7 @@ export default {
   methods: {
     load () { // 页面加载
       const that = this
-      const token = window.sessionStorage.getItem('token')
-      this.axios.get('http://192.168.1.54:8081/m.api', {
-        headers: {
-          ADMINTOKEN: token
-        },
-        params: {
-          _gp: 'admin.role',
-          _mt: 'list',
-          name: that.form.name,
-          page: that.form.page,
-          limit: that.form.limit
-        }
-      }).then(function (reds) {
+      roleList(that.form).then(function (reds) {
         that.tableData = reds.data.data
       })
     },
@@ -125,7 +124,7 @@ export default {
       this.load()
     },
     handleFilter () { // 点击查找
-      this.load()
+      this.load() // 如果角色名称为空，感觉体验不好
     },
     handleCreate () { // 点击添加
       this.title = '创建'
@@ -141,85 +140,72 @@ export default {
       this.edit = event
     },
     roleADD () { // 添加角色
-      const that = this
-      const token = window.sessionStorage.getItem('token')
-      this.axios.get('http://192.168.1.54:8081/m.api', {
-        headers: {
-          ADMINTOKEN: token
-        },
-        params: {
-          _gp: 'admin.role',
-          _mt: 'create',
-          role: that.roleForm
-        }
-      }).then(function (reds) {
-        if (reds.data.errmsg === '成功') {
-          that.$message({
-            showClose: true,
-            message: '添加成功',
-            type: 'success'
-          })
-          that.load()
-        } else {
-          that.$message({
-            showClose: true,
-            message: reds.data.errmsg,
-            type: 'error'
-          })
-        }
-        that.addRole = false
-      })
+      if (this.roleForm.name.trim() !== '' && this.roleForm.desc.trim() !== '') {
+        const that = this
+        addRole(that.roleForm).then(function (reds) {
+          if (reds.data.errmsg === '成功') {
+            that.$message({
+              showClose: true,
+              message: '添加成功',
+              type: 'success'
+            })
+            that.load()
+          } else {
+            that.$message({
+              showClose: true,
+              message: reds.data.errmsg,
+              type: 'error'
+            })
+          }
+          that.addRole = false
+        })
+      } else {
+        this.$message({
+          showClose: true,
+          message: '角色名称或说明不能为空',
+          type: 'error'
+        })
+      }
     },
     roleUPDATE () { // 编辑角色
-      const that = this
-      this.edit.name = this.roleForm.name
-      this.edit.desc = this.roleForm.desc
-      const token = window.sessionStorage.getItem('token')
-      this.axios.get('http://192.168.1.54:8081/m.api', {
-        headers: {
-          ADMINTOKEN: token
-        },
-        params: {
-          _gp: 'admin.role',
-          _mt: 'update',
-          role: that.edit
-        }
-      }).then(function (reds) {
-        if (reds.data.errmsg === '成功') {
-          that.$message({
-            showClose: true,
-            message: '修改成功',
-            type: 'success'
-          })
-          that.load()
-        } else {
-          that.$message({
-            showClose: true,
-            message: reds.data.errmsg,
-            type: 'error'
-          })
-        }
-        that.addRole = false
-      })
+      if (this.roleForm.name.trim() !== '' && this.roleForm.desc.trim() !== '') {
+        const that = this
+        this.edit.name = this.roleForm.name
+        this.edit.desc = this.roleForm.desc
+        roleUpdate(that.edit).then(function (reds) {
+          if (reds.data.errmsg === '成功') {
+            that.$message({
+              showClose: true,
+              message: '修改成功',
+              type: 'success'
+            })
+            that.load()
+          } else {
+            that.$message({
+              showClose: true,
+              message: reds.data.errmsg,
+              type: 'error'
+            })
+          }
+          that.addRole = false
+        })
+      } else {
+        this.$message({
+          showClose: true,
+          message: '角色名称或说明不能为空',
+          type: 'error'
+        })
+      }
     },
     handleDelete (event) { // 删除角色
+      console.log(event)
       this.$confirm('此操作将永久删除该角色---' + event.name + '---, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
         const that = this
-        const token = window.sessionStorage.getItem('token')
-        this.axios.get('http://192.168.1.54:8081/m.api', {
-          headers: {
-            ADMINTOKEN: token
-          },
-          params: {
-            _gp: 'admin.role',
-            _mt: 'delete',
-            roleId: event.id
-          }
-        }).then(function (reds) {
+        roleDelete(event.id).then(function (reds) {
           if (reds.data.errmsg === '成功') {
             that.$message({
               showClose: true,
@@ -238,20 +224,10 @@ export default {
         })
       })
     },
-    handlePermission (event) { // 角色授权
+    handlePermission (event) { // 角色授权列表
       this.AuthorizationId = event.id
       const that = this
-      const token = window.sessionStorage.getItem('token')
-      this.axios.get('http://192.168.1.54:8081/m.api', {
-        headers: {
-          ADMINTOKEN: token
-        },
-        params: {
-          _gp: 'admin.role',
-          _mt: 'permissionList',
-          roleId: event.id
-        }
-      }).then(function (reds) {
+      jurisdictionList(event.id).then(function (reds) {
         if (reds.data.errmsg === '成功') {
           that.authorization = reds.data.data
           that.Authorization = true
@@ -264,7 +240,7 @@ export default {
         }
       })
     },
-    AuthorizaTion () {
+    AuthorizaTion () { // 给角色授权
       const that = this
       const DTO = {
         roleId: null,
@@ -272,11 +248,7 @@ export default {
       }
       DTO.roleId = that.AuthorizationId
       DTO.permissions = that.$refs.auth.getCheckedKeys(true)
-      this.axios.post('http://192.168.1.54:8081/m.api', this.global.qs.stringify({
-        _gp: 'admin.role',
-        _mt: 'permissionSet',
-        roleSetPermissionDTO: JSON.stringify(DTO)
-      })).then(function (reds) {
+      roleJurisdiction(DTO).then(function (reds) {
         that.Authorization = false
         if (reds.data.errmsg === '成功') {
           that.$message({
@@ -294,7 +266,6 @@ export default {
         }
       })
     }
-
   }
 }
 </script>

@@ -32,6 +32,7 @@
 </template>
 
 <script>
+import { listRole } from '../../api/dashboard.js'
 export default {
   data () {
     return {
@@ -47,16 +48,7 @@ export default {
       // 基于准备好的dom，初始化echarts实例
 
       const that = this
-      const token = window.sessionStorage.getItem('token')
-      this.axios.get('http://192.168.1.54:8081/m.api', {
-        headers: {
-          ADMINTOKEN: token
-        },
-        params: {
-          _gp: 'admin.dashboard',
-          _mt: 'integral'
-        }
-      }).then(function (reds) {
+      listRole().then(function (reds) {
         that.waitStockCount = reds.data.data.waitStockCount
         that.goodsCount = reds.data.data.goodsCount
         // 创建容器

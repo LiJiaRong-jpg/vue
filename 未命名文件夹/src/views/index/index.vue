@@ -1,34 +1,29 @@
 <template>
   <div @click="closeMenu">
     <el-container style="height: 100vh; border: 1px solid #eee" @click="closeMenu">
-      <el-aside width="auto" style="background-color: #314156;height: 100vh;">
+      <el-aside width="auto" style="background-color: #314156;height: 100vh;z-index: 11;">
       <div v-show="isCollapse" style="width: 17px;height: 100vh;position: absolute;left: 63px;background-color: #314156;z-index: 9;"></div>-->
         <el-menu :default-active="active" class="el-menu-vertical-demo" :collapse="isCollapse" unique-opened router>
           <el-menu-item index="/dashboard" data-title="首页" data-titl="首页" @click="title">
             <i class="el-icon-s-home"></i>
             <span slot="title">首页</span>
           </el-menu-item>
-          <el-submenu v-for="(item,index) in router" :index="index+''" :key="index">
+          <el-submenu v-for="(item,index) in router" :index="index+''" :key="item.title">
             <template slot="title" class="el-submenu__title"><i
                 :class="item.i"></i><span>{{item.title}}</span></template>
             <el-menu-item-group style="background-color: #c;">
-              <el-menu-item v-for="(Item,Index) in item.children" :key="Index" :index="Item.path"
-                :data-title="Item.title" :data-titl="Item.titl" @click="title">{{Item.titl}}</el-menu-item>
+              <el-menu-item v-for="Item in item.children" :key="Item.titl" :index="Item.path"
+                :data-title="Item.title" :data-titl="Item.titl" @click="title($event,index)">{{Item.titl}}</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
         </el-menu>
       </el-aside>
-
       <el-container>
-
         <el-header style="text-align: right; font-size: 12px;background-color: white;border-bottom: 1px solid #dcdfe6;">
-
           <i class="el-icon-s-fold" style=" float: left;line-height: 60px;font-size: 20px;" @click="iconFont"></i>
-
-          <i @click="breadcrumb" style="float: left;font-size: 25px;margin-left: 10px;padding-right: 5px;"
+          <i @click="breadcrumb" style="float: left;font-size: 15px;margin-left: 10px;padding-right: 5px;"
             :class="TITLE!=='首页'?'i':''">首页</i>
-          <i v-if="TITLE!=='首页'" style="float: left;font-size: 25px;padding-right: 10px;">>{{TITLE}}</i>
-
+          <i v-if="TITLE!=='首页'" style="float: left;font-size: 15px;padding-right: 10px;">>{{TITLE}}</i>
           <el-tooltip class="item" effect="dark" content="全屏" placement="bottom">
             <el-button class="iconfont iconfangda" style="font-size: 20px;background-color: rgba(0,0,0,0);border: 0;">
             </el-button>
@@ -52,7 +47,6 @@
             </el-dropdown-menu>
           </el-dropdown>
         </el-header>
-
         <el-main style="padding: 0;">
         <!-- <div ref="qwer"
           style="position: absolute;background-color: white;z-index: 10;overflow-x: clip;width: 100%;border-bottom: 1px solid #dcdfe6;height: 40px;white-space: nowrap;"
@@ -62,12 +56,10 @@
               class="el-icon-close" @click="Dele(index)"></i></el-button>
         </div> -->
         <div>
-          <tabS :arr="arr" style="position: absolute;background-color: white;z-index: 10;overflow-x: clip;width: 100%;border-bottom: 1px solid #dcdfe6;height: 40px;white-space: nowrap;"
-          @mousewheel.prevent="mouse" @buttom='Buttom($event)' @openmenu="openMenu($event)" @dele="Dele($event)"></tabS>
+          <tabS :arr="arr" @wheel="mouse" @buttom='Buttom($event)' @openmenu="openMenu($event)" @dele="Dele($event)"></tabS>
         </div>
           <router-view></router-view>
         </el-main>
-
       </el-container>
       <div class="muen" ref="muen"
         style="z-index:20;width: 100px;height: 130px;position: fixed;color: black;box-shadow: 2px 2px 3px 0 rgb(0 0 0 / 30%);background-color: white;"
@@ -87,9 +79,17 @@ export default {
   components: {
     tabS
   },
+  mounted () {
+    this.TITLE = this.$route.name[0] // 第一次加载时显示的标签和标题
+    this.arr[0].title = this.$route.name[0]
+    this.arr[0].titl = this.$route.name[1]
+    this.arr[0].route = this.$route.path
+
+    this.active = this.$route.path
+  },
   data () {
     return {
-      active: '2', // 默认展开
+      active: '/operate/ordermanage', // 默认展开
       isCollapse: false, // 左侧选项的收缩
       color1: '#409EFF', // 换肤的颜色切换
       TITLE: '首页', // 显示当前所在页面
@@ -161,7 +161,7 @@ export default {
           titl: '管理员'
         }, {
           path: '/system/rolemanage',
-          title: '系统管理>优惠劵管理',
+          title: '系统管理>角色管理',
           titl: '角色管理'
         }]
       }]
@@ -190,9 +190,8 @@ export default {
         }, 10)
       }
     },
-    title (e) {
+    title (e, index) {
       this.TITLE = e.$attrs['data-title'] // 切换路由时，右侧顶部显示的文字
-
       let TRUE = true // 跳转标签的增加
       for (let i = 0; i < this.arr.length; i++) {
         if (this.arr[i].titl === e.$attrs['data-titl']) {
@@ -209,6 +208,7 @@ export default {
       }
     },
     Buttom (e) { // 跳转路由
+      this.active = this.arr[e].route
       this.TITLE = this.arr[e].title
       this.$router.push({
         path: this.arr[e].route
@@ -262,7 +262,7 @@ export default {
       }
     },
     mouse (event) {
-      if (event.wheelDelta > 0) {
+      if (event > 0) {
         // 如果滚轮往前划则滚动条往左
         this.$refs.qwer.scrollLeft -= 10
       } else {
@@ -270,11 +270,11 @@ export default {
         this.$refs.qwer.scrollLeft += 10
       }
     },
-    openMenu (w, e) {
-      this.muen = e
+    openMenu (w) {
+      this.muen = w[1]
       this.SHOW = true
-      this.$refs.muen.style.top = w.clientY + 'px'
-      this.$refs.muen.style.left = w.clientX + 'px'
+      this.$refs.muen.style.top = w[0].clientY + 'px'
+      this.$refs.muen.style.left = w[0].clientX + 'px'
     },
     closeMenu () {
       this.SHOW = false
@@ -323,6 +323,9 @@ export default {
         console.log(command)
       } else {
         window.sessionStorage.removeItem('token') // 退出登录
+        if (this.$route.path === '/login') {
+          window.sessionStorage.setItem('router', this.$route.path) // 存储当前路由
+        }
         this.$router.push({
           path: '/login'
         }).catch(err => {
@@ -386,5 +389,6 @@ export default {
 
   .i:hover {
     color: #409EFF;
+    cursor: pointer;
   }
 </style>

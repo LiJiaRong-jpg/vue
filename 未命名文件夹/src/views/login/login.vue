@@ -51,45 +51,64 @@
 </template>
 
 <script>
+import { dengLu } from '../../api/login.js'
 export default {
   data () {
     return {
-      account: 'admin', // 用户名
-      pass: '123456', // 密码
+      account: '', // 用户名
+      pass: '', // 密码
       token: '666666', // 验证码
-      radio: false // 记住密码
+      radio: true // 记住密码
     }
+  },
+  mounted () {
+    const account = JSON.parse(window.localStorage.getItem('account'))
+    console.log(account)
+    this.account = account.account
+    this.pass = account.pass
   },
   methods: {
     login () {
-      const that = this
-      this.axios.get('http://192.168.1.54:8081/m.api', {
-        params: {
-          _gp: 'admin',
-          _mt: 'login',
-          username: that.account, // 用户名
-          password: that.pass, // 密码
-          verifyCode: that.token // 验证码
-        }
-      }).then(function (data) {
-        if (data.data.errmsg === '成功') {
-          that.$message({
-            showClose: true,
-            message: '成功',
-            type: 'success'
-          })
-          window.sessionStorage.token = data.data.data
-          that.$router.push({ path: '/dashboard' }).catch(err => {
-            console.log(err)
-          })
+      if (this.account === 'admin' && this.pass === '123456' && this.token === '666666') {
+        if (this.radio === true) {
+          const role = {
+            account: this.account,
+            pass: this.pass,
+            toke: this.token
+          }
+          window.localStorage.setItem('account', JSON.stringify(role))
         } else {
-          that.$message({
-            showClose: true,
-            message: data.data.errmsg,
-            type: 'error'
-          })
+          window.localStorage.removeItem('account')
         }
-      })
+        const that = this
+        dengLu(this.account, this.pass, this.token).then(function (data) {
+          if (data.data.errmsg === '成功') {
+            if (window.sessionStorage.getItem('router')) {
+              window.sessionStorage.token = data.data.data
+              const rou = window.sessionStorage.getItem('router')
+              that.$router.push({ path: rou }).catch(err => {
+                console.log(err)
+              })
+            } else {
+              that.$message({
+                showClose: true,
+                message: '成功',
+                type: 'success'
+              })
+              window.sessionStorage.token = data.data.data
+              that.$router.push({ path: '/dashboard' }).catch(err => {
+                console.log(err)
+              })
+            }
+          } else {
+            that.$message({
+              showClose: true,
+              message: data.data.errmsg,
+              type: 'error'
+            })
+          }
+        })
+      }
     },
     ACCOUNT () { // 账号框失焦
       if (this.account.trim() === '') {

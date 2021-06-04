@@ -13,14 +13,14 @@
       </el-select>
       <el-input v-model="userForm.id" clearable style="width: 200px;margin: 10px;" placeholder="请输入用户Id" />
       <el-input v-model="userForm.nickname" clearable style="width: 200px;margin: 10px;" placeholder="请输入昵称" />
-      <el-button type="primary"
-        icon="el-icon-search" @click="load">查找
+      <el-button type="primary" icon="el-icon-search" @click="load">查找
       </el-button>
-      <el-button type="primary" icon="el-icon-edit">添加用户
+      <el-button type="primary" icon="el-icon-edit" @click="AddUser">添加用户
       </el-button>
     </div>
 
-    <el-table :data="tableData.items" style="width: 95%;margin: auto;margin-top: 20px;" :default-sort="{prop: 'date', order: 'descending'}" border="">
+    <el-table :data="tableData.items" style="width: 95%;margin: auto;margin-top: 20px;"
+      :default-sort="{prop: 'date', order: 'descending'}" border="">
       <el-table-column prop="id" label="用户ID" sortable align="center">
       </el-table-column>
       <el-table-column prop="nickname" label="昵称" align="center">
@@ -39,7 +39,7 @@
       </el-table-column>
       <el-table-column prop="gmtLastLogin" label="上次登录时间" align="center">
         <template slot-scope="scope">
-          <el-button type="primary" style="padding: 10px;" plain>{{GmtLastLogin(scope.row.gmtLastLogin)}}</el-button>
+          <span>{{GmtLastLogin(scope.row.gmtLastLogin)}}</span>
         </template>
       </el-table-column>
 
@@ -55,7 +55,8 @@
         <!-- :formatter="formatter" -->
         <template slot-scope="scope">
           <el-button type="primary" size="mini" @click="statusUpdate(scope)">
-            {{ scope.row.status === 0 ? "激活" : "冻结" }}</el-button>
+            {{ scope.row.status === 0 ? "激活" : "冻结" }}
+          </el-button>
           <el-button type="primary" size="mini" @click="handleUpdate(scope)">
             编辑</el-button>
           <el-button type="danger" size="mini" @click="handleDelete(scope)">
@@ -71,12 +72,50 @@
       </el-pagination>
     </div>
 
+    <el-dialog :title="title" :visible.sync="show">
+      <el-form ref="form" :model="addForm" label-width="90px">
+        <el-form-item label="角色昵称">
+          <el-input v-model="addForm.nickname"></el-input>
+        </el-form-item>
+        <el-form-item label="用户手机号">
+          <el-input v-model="addForm.phone"></el-input>
+        </el-form-item>
+        <el-form-item label="用户密码">
+          <el-input v-model="addForm.password"></el-input>
+        </el-form-item>
+        <el-form-item label="用户性别">
+          <el-select v-model="addForm.gender" style="width: 200px;margin: 10px;" placeholder="请选择用户性别">
+            <el-option v-for="(key, index) in Gender" :key="index" :label="key.name" :value="key.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用户等级">
+          <el-select v-model="addForm.level" style="width: 200px;margin: 10px;" placeholder="请选择用户会员等级">
+            <el-option v-for="(key, index) in evelDic" :key="index" :label="key.name" :value="key.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用户状态">
+          <el-select v-model="addForm.status" style="width: 200px;margin: 10px;" placeholder="请选择用户状态">
+            <el-option v-for="(key, index) in statusDic" :key="index" :label="key.name" :value="key.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div style="float: right;">
+        <el-button @click="show = false">取消</el-button>
+        <el-button v-if="title=='创建'" type="primary" @click="userADD">确定</el-button>
+        <el-button v-if="title=='编辑'" type="primary" @click="userUPDATE">确定</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import {
-  userList
+  userList,
+  status,
+  deleteUser,
+  addUser,
+  updateUser
 } from '../../api/system/usermanage.js'
 export default {
   data () {
@@ -133,7 +172,26 @@ export default {
       tableData: { // 返回的数据
         items: [],
         total: 0
-      }
+      },
+      addForm: { // 添加修改会员所需的数据
+        avatarUrl: '',
+        gender: '',
+        gmtCreate: '',
+        gmtLastLogin: '',
+        gmtUpdate: '',
+        id: '',
+        lastLoginIp: '',
+        level: '',
+        loginType: '',
+        nickname: '',
+        openId: '',
+        password: '',
+        phone: '',
+        status: ''
+      },
+      index: 0, // 点击tab列表中的按钮的位置
+      show: false, // 弹出框的显隐
+      title: '创建' // 弹出框的标题
     }
   },
   mounted () {
@@ -170,7 +228,6 @@ export default {
       return gender
     },
     LV (level) {
-      console.log(level)
       switch (level) {
         case 0:
           level = '普通会员'
@@ -187,7 +244,7 @@ export default {
     Status (status) {
       switch (status) {
         case 0:
-          status = '一起'
+          status = '冻结'
           break
         case 1:
           status = '激活'
@@ -199,11 +256,131 @@ export default {
       return status
     },
     GmtLastLogin (gmtLastLogin) {
-
+      var date = new Date(gmtLastLogin) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
+      var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '月'
+      var D = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate()) + '日'
+      var h = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours()) + '时'
+      var m = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()) + '分'
+      gmtLastLogin = M + D + h + m
+      return gmtLastLogin
+    },
+    statusUpdate (row) { // 改变用户状态
+      const that = this
+      if (row.row.status === 0) {
+        row.row.status = 1
+      } else {
+        row.row.status = 0
+      }
+      status(row.row.id, row.row.status).then(function (reds) {
+        if (reds.data.errmsg === '成功') {
+          that.$message({
+            showClose: true,
+            message: '修改成功',
+            type: 'success'
+          })
+          that.load()
+        } else {
+          that.$message({
+            showClose: true,
+            message: reds.data.errmsg,
+            type: 'error'
+          })
+        }
+      })
+    },
+    handleDelete (row) { // 删除会员
+      const that = this
+      this.index = row.$index
+      this.$confirm('此操作将永久删除该角色---' + row.row.nickname + '---, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteUser(row.row.id, row.row.nickname).then(function (reds) {
+          if (reds.data.errmsg === '成功') {
+            that.tableData.items.splice(that.index, 1)
+            that.$message({
+              showClose: true,
+              message: '删除成功',
+              type: 'success'
+            })
+            if (that.tableData.items.length < 2) {
+              that.load()
+            }
+          } else {
+            that.$message({
+              showClose: true,
+              message: reds.data.errmsg,
+              type: 'error'
+            })
+            that.load()
+          }
+        })
+      })
+    },
+    AddUser () { // 点击创建
+      this.title = '创建'
+      this.show = true
+      this.addForm = {
+        nickname: '',
+        phone: '',
+        level: '',
+        gender: '',
+        password: '',
+        status: '',
+        avatarUrl: ''
+      }
+    },
+    handleUpdate (row) { // 点击编辑
+      console.log(row)
+      this.title = '编辑'
+      row = JSON.stringify(row.row)
+      this.addForm = JSON.parse(row)
+      this.show = true
+    },
+    userUPDATE () { // 修改会员
+      const that = this
+      that.show = false
+      updateUser(this.addForm).then(function (reds) {
+        if (reds.data.errmsg === '成功') {
+          that.$message({
+            showClose: true,
+            message: '修改成功',
+            type: 'success'
+          })
+          that.load()
+        } else {
+          that.$message({
+            showClose: true,
+            message: reds.data.errmsg,
+            type: 'error'
+          })
+        }
+      })
+    },
+    userADD () { // 添加会员
+      const that = this
+      addUser(this.addForm).then(function (reds) {
+        console.log(reds.data.data)
+        if (reds.data.errmsg === '成功') {
+          that.$message({
+            showClose: true,
+            message: '添加成功',
+            type: 'success'
+          })
+          // that.load()
+        } else {
+          that.$message({
+            showClose: true,
+            message: reds.data.errmsg,
+            type: 'error'
+          })
+        }
+      })
     }
   }
 }
 </script>
 
-<style>
+<style scoped="scoped">
 </style>

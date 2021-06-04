@@ -271,7 +271,7 @@ export default {
               type: 'error'
             })
           }
-          that.addRole = false
+          that.load()
         })
       })
     }

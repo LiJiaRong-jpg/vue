@@ -220,6 +220,7 @@ export default {
               type: 'error'
             })
           }
+          that.load()
           that.addRole = false
         })
       })

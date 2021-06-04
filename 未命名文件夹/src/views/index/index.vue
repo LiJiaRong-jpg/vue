@@ -56,7 +56,7 @@
               class="el-icon-close" @click="Dele(index)"></i></el-button>
         </div> -->
         <div>
-          <tabS :arr="arr" @wheel="mouse" @buttom='Buttom($event)' @openmenu="openMenu($event)" @dele="Dele($event)"></tabS>
+          <tabS :arr="arr" :Index="Index" @wheel="mouse" @buttom='Buttom($event)' @openmenu="openMenu($event)" @dele="Dele($event)"></tabS>
         </div>
           <router-view></router-view>
         </el-main>
@@ -89,6 +89,7 @@ export default {
   },
   data () {
     return {
+      Index: 0,
       active: '/operate/ordermanage', // 默认展开
       isCollapse: false, // 左侧选项的收缩
       color1: '#409EFF', // 换肤的颜色切换
@@ -323,7 +324,7 @@ export default {
         console.log(command)
       } else {
         window.sessionStorage.removeItem('token') // 退出登录
-        if (this.$route.path === '/login') {
+        if (this.$route.path !== '/login') {
           window.sessionStorage.setItem('router', this.$route.path) // 存储当前路由
         }
         this.$router.push({
@@ -336,6 +337,15 @@ export default {
             type: 'success'
           })
         })
+      }
+    }
+  },
+  watch: {
+    $route (to, from) {
+      for (var i = 0; i < this.arr.length; i++) {
+        if (this.arr[i].route === to.path) {
+          this.Index = i
+        }
       }
     }
   }

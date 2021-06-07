@@ -23,15 +23,14 @@ export function deleteCou (data) {
     }
   })
 }
-// 修改优惠劵
-export function updateStatus (id, status) {
+// 修改优惠劵状态
+export function updateStatus (data) {
   return axios({
     method: 'get',
     params: {
       _gp: 'admin.coupon',
-      _mt: 'updateCoupon',
-      id: id,
-      status: status
+      _mt: 'updateCouponStatus',
+      ...data
     }
   })
 }

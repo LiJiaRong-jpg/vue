@@ -211,7 +211,7 @@ export default {
             message: '添加成功',
             type: 'success'
           })
-          this.adminForm = { // 添加后清除编辑残留信息
+          that.adminForm = { // 添加后清除编辑残留信息
             realname: '',
             username: '',
             phone: '',

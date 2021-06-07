@@ -1,9 +1,10 @@
-
 // 新建vue 实例
 import axios from 'axios'
 import router from '../router'
 import Vue from 'vue'
-import { Message } from 'element-ui'
+import {
+  Message
+} from 'element-ui'
 
 // 导入登录页面，做无痛刷新
 import { dengLu } from './login.js'
@@ -11,7 +12,7 @@ Vue.prototype.$message = Message
 
 const instance = axios.create({
   baseURL: 'http://192.168.1.54:8081/m.api', // url请求路径
-  timeout: 5000// 超时
+  timeout: 5000 // 超时
 })
 
 router.beforeEach((to, from, next) => { // 路由拦截器
@@ -46,44 +47,100 @@ router.beforeEach((to, from, next) => { // 路由拦截器
   }
 })
 
-instance.interceptors.response.use(function (response) { // 请求返回拦截器
-  const pass = JSON.parse(window.localStorage.getItem('account')) // 获取储存的用户账号信息，做无痛刷新
-  if (response.config.method === 'get') { // 排除不是登录页面的请求
-    if (pass && response.data.errmsg === '成功' && response.config.params._mt !== 'login') { // 如果用户登录成功且返回成功且不是登录页面的请求就做刷新
-      dengLu(pass.account, pass.pass, pass.toke).then(function (data) {
-        window.sessionStorage.token = data.data.data
-      })
+instance.interceptors.response.use(function(response) {
+  if(response.config.method=='get'){
+  if (response.config.params._mt !== 'login') { // 不是登录的请求
+    if (response.config.headers.ADMINTOKEN === undefined) { // 没有token
+      if (pass) { // 如果用户记住密码
+        response.data.data = '成功'
+        return getToken(pass, response)
+      } else {
+        window.sessionStorage.removeItem('token')
+        router.push({
+          path: '/login'
+        }).catch(err => {
+          console.log(err)
+        })
+        Message({
+          showClose: true,
+          message: '登录超时，请重新登录',
+          type: 'error'
+        })
+      }
+    } else {
+      if (response.data.errno === 10006 || response.data.errno === 10001) { // 如果状态码为1001或1006，就要刷新token
+        const pass = JSON.parse(window.localStorage.getItem('account'))
+        if (pass) { // 如果用户记住密码
+          return getToken(pass, response)
+        } else {
+          window.sessionStorage.removeItem('token')
+          router.push({
+            path: '/login'
+          }).catch(err => {
+            console.log(err)
+          })
+          Message({
+            showClose: true,
+            message: '登录超时，请重新登录',
+            type: 'error'
+          })
+        }
+      } else {
+        return response
+      }
     }
-  } else {
-    dengLu(pass.account, pass.pass, pass.toke).then(function (data) {
-      window.sessionStorage.token = data.data.data
-    })
-  }
-  // 如果状态码为1001或1006，就要用户重新登录
-  if (response.data.errno === 10006 || response.data.errno === 10001) {
-    window.sessionStorage.removeItem('token')
-    console.log(router)
-    if (router.history.current.path !== '/login') {
-      window.sessionStorage.setItem('router', router.history.current.path) // 存储当前路由
-    }
-    router.push({
-      path: '/login'
-    }).catch(err => {
-      console.log(err)
-    })
-    Message({
-      showClose: true,
-      message: '登录超时，请重新登录',
-      type: 'error'
-    })
   } else {
     return response
   }
+  return response
+  }else{
+    if (response.config.headers.ADMINTOKEN === undefined) { // 没有token
+      if (pass) { // 如果用户记住密码
+        response.data.data = '成功'
+        return getToken(pass, response)
+      } else {
+        window.sessionStorage.removeItem('token')
+        router.push({
+          path: '/login'
+        }).catch(err => {
+          console.log(err)
+        })
+        Message({
+          showClose: true,
+          message: '登录超时，请重新登录',
+          type: 'error'
+        })
+      }
+    } else {
+      if (response.data.errno === 10006 || response.data.errno === 10001) { // 如果状态码为1001或1006，就要刷新token
+        const pass = JSON.parse(window.localStorage.getItem('account'))
+        if (pass) { // 如果用户记住密码
+          return getToken(pass, response)
+        } else {
+          window.sessionStorage.removeItem('token')
+          router.push({
+            path: '/login'
+          }).catch(err => {
+            console.log(err)
+          })
+          Message({
+            showClose: true,
+            message: '登录超时，请重新登录',
+            type: 'error'
+          })
+        }
+      } else {
+        return response
+      }
+    }
+  }
+}, error => {
+  return Promise.reject(error)
 })
 
 instance.interceptors.request.use( // 请求拦截器
   config => {
-  // 在临时储存中获取token加入到请求头
+    // 在临时储存中获取token加入到请求头
     const token = sessionStorage.getItem('token')
     config.headers.ADMINTOKEN = token
     return config
@@ -92,4 +149,11 @@ instance.interceptors.request.use( // 请求拦截器
     return Promise.reject(error)
   })
 
+async function getToken(pass, Request) {
+  let toke = await dengLu(pass.account,pass.pass,pass.toke)//获取token
+  window.sessionStorage.token = toke.data.data
+  Request.config.headers.ADMINTOKEN = toke.data.data
+  const req = await axios.request(Request.config) // 重新执行原请求
+  return req
+}
 export default instance

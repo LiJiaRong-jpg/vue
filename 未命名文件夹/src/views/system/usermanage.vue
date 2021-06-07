@@ -125,9 +125,9 @@ export default {
         pageNo: 1,
         limit: 10,
         id: '',
-        level: '',
-        gender: '',
-        status: ''
+        level: 0,
+        gender: 2,
+        status: 0
       },
       Gender: [ // 搜索性别
         {
@@ -191,7 +191,8 @@ export default {
       },
       index: 0, // 点击tab列表中的按钮的位置
       show: false, // 弹出框的显隐
-      title: '创建' // 弹出框的标题
+      title: '创建', // 弹出框的标题
+      STatus: null
     }
   },
   mounted () {
@@ -267,11 +268,11 @@ export default {
     statusUpdate (row) { // 改变用户状态
       const that = this
       if (row.row.status === 0) {
-        row.row.status = 1
+        this.STatus = 1
       } else {
-        row.row.status = 0
+        this.STatus = 0
       }
-      status(row.row.id, row.row.status).then(function (reds) {
+      status(row.row.id, this.STatus).then(function (reds) {
         if (reds.data.errmsg === '成功') {
           that.$message({
             showClose: true,

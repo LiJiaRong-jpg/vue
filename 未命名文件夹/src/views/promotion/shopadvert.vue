@@ -275,10 +275,8 @@
         }
         if (this.addForm.url.indexOf("tid") >= 0) {
           this.url.one = "C_" + this.addForm.url.replace(/[^0-9]/gi, "");
-          this.url.two = ''
         } else {
-          this.url.two = "G_" + this.addForm.url.replace(/[^0-9]/gi, "");
-          this.url.one = ''
+          this.url.one = "G_" + this.addForm.url.replace(/[^0-9]/gi, "");
         }
       },
       onBeforeUpload(file) {

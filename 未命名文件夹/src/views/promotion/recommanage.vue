@@ -59,141 +59,146 @@
 </template>
 
 <script>
-import {
-  recommendList,
-  recommendDelete,
-  addList,
-  addshopping
-} from '../../api/promotion/recommanage.js'
-export default {
-  data () {
-    return {
-      ListForm: { // 获取推荐管理列表所需信息
-        pageNo: 1,
-        limit: 10,
-        recommendType: ''
-      },
-      tabDate: { // 返回数据
-        total: 0,
-        items: []
-      },
-      recommendType: [{
-        value: 1,
-        unionType: 3,
-        name: '橱窗推荐'
-      },
-      {
-        value: '',
-        unionType: 3,
-        name: '全部'
-      }
-      ],
-      addlist: [],
-      show: false,
-      addForm: {
-        spuId: '',
-        recommendType: ''
-      }
-    }
-  },
-  mounted () {
-    this.load()
-  },
-  methods: {
-    load () {
-      const that = this
-      recommendList(this.ListForm).then(function (reds) {
-        that.tabDate = reds.data.data
-      })
-      addList().then(function (reds) {
-        that.addlist = that.clearChildren(reds.data.data)
-      })
-    },
-    clearChildren (data) { // 删除为空的子元素
-      if (data === null || data === undefined) {
-        return data
-      }
-      for (let i = 0; i < data.length; i++) {
-        if (data[i].children.length === 0) {
-          data[i].children = undefined
-        } else {
-          this.clearChildren(data[i].children)
+  import {
+    recommendList,
+    recommendDelete,
+    addList,
+    addshopping
+  } from '../../api/promotion/recommanage.js'
+  export default {
+    data() {
+      return {
+        ListForm: { // 获取推荐管理列表所需信息
+          pageNo: 1,
+          limit: 10,
+          recommendType: ''
+        },
+        tabDate: { // 返回数据
+          total: 0,
+          items: []
+        },
+        recommendType: [{
+            value: 1,
+            unionType: 3,
+            name: '橱窗推荐'
+          },
+          {
+            value: '',
+            unionType: 3,
+            name: '全部'
+          }
+        ],
+        addlist: [],
+        show: false,
+        addForm: {
+          spuId: '',
+          recommendType: ''
         }
       }
-      return data
     },
-    handleSizeChange (e) { // 点击控制页数
-      this.ListForm.limit = e
+    mounted() {
       this.load()
     },
-    handleCurrentChange (e) { // 输入框控制页数
-      this.ListForm.pageNo = e
-      this.load()
-    },
-    Type (e) {
-      switch (e) {
-        case 1:
-          e = '橱窗推荐'
-          break
-        default:
-          e = '全部'
-          break
-      }
-      return e
-    },
-    DeleteCou (row) { // 删除推荐
-      const that = this
-      this.$confirm('此操作将永久删除该优惠劵---' + row.spuTitle + '---, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        recommendDelete(row.id, row.recommendType).then(function (reds) {
+    methods: {
+      load() {
+        const that = this
+        recommendList(this.ListForm).then(function(reds) {
+          that.tabDate = reds.data.data
+        })
+        addList().then(function(reds) {
+          that.addlist = that.clearChildren(reds.data.data)
+        })
+      },
+      clearChildren(data) { // 删除为空的子元素
+        if (data === null || data === undefined) {
+          return data
+        }
+        for (let i = 0; i < data.length; i++) {
+          if (data[i].children.length === 0) {
+            data[i].children = undefined
+          } else {
+            this.clearChildren(data[i].children)
+          }
+        }
+        return data
+      },
+      handleSizeChange(e) { // 点击控制页数
+        this.ListForm.limit = e
+        this.load()
+      },
+      handleCurrentChange(e) { // 输入框控制页数
+        this.ListForm.pageNo = e
+        this.load()
+      },
+      Type(e) {
+        switch (e) {
+          case 1:
+            e = '橱窗推荐'
+            break
+          default:
+            e = '全部'
+            break
+        }
+        return e
+      },
+      DeleteCou(row) { // 删除推荐
+        const that = this
+        this.$confirm('此操作将永久删除该优惠劵---' + row.spuTitle + '---, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          recommendDelete(row.id, row.recommendType).then(function(reds) {
+            if (reds.data.errmsg === '成功') {
+
+              that.mess ? that.mess.close() : ''
+              that.mess = that.$message({
+                showClose: true,
+                message: '删除成功',
+                type: 'success'
+              })
+              that.load()
+            } else {
+              that.mess ? that.mess.close() : ''
+              that.mess = that.$message({
+                showClose: true,
+                message: reds.data.errmsg,
+                type: 'error'
+              })
+            }
+          })
+        })
+      },
+      add() {
+        const that = this
+        addshopping(this.addForm).then(function(reds) {
           if (reds.data.errmsg === '成功') {
-            that.$message({
+            that.tableData.items.splice(that.index, 1)
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
               showClose: true,
-              message: '删除成功',
+              message: '添加成功',
               type: 'success'
             })
             that.load()
           } else {
-            that.$message({
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
               showClose: true,
               message: reds.data.errmsg,
               type: 'error'
             })
+            that.load()
           }
         })
-      })
-    },
-    add () {
-      const that = this
-      addshopping(this.addForm).then(function (reds) {
-        if (reds.data.errmsg === '成功') {
-          that.tableData.items.splice(that.index, 1)
-          that.$message({
-            showClose: true,
-            message: '添加成功',
-            type: 'success'
-          })
-          that.load()
-        } else {
-          that.$message({
-            showClose: true,
-            message: reds.data.errmsg,
-            type: 'error'
-          })
-          that.load()
+      },
+      handleChange(value) {
+        if (value !== undefined) {
+          this.addForm.spuId = value[value.length - 1].substring(2)
         }
-      })
-    },
-    handleChange (value) {
-      if (value !== undefined) {
-        this.addForm.spuId = value[value.length - 1].substring(2)
       }
     }
   }
-}
 </script>
 
 <style>

@@ -110,277 +110,285 @@
 </template>
 
 <script>
-import {
-  userList,
-  status,
-  deleteUser,
-  addUser,
-  updateUser
-} from '../../api/system/usermanage.js'
-export default {
-  data () {
-    return {
-      userForm: { // 会员管理列表请求信息
-        nickname: '',
-        pageNo: 1,
-        limit: 10,
-        id: '',
-        level: 0,
-        gender: 2,
-        status: 0
+  import {
+    userList,
+    status,
+    deleteUser,
+    addUser,
+    updateUser
+  } from '../../api/system/usermanage.js'
+  export default {
+    data() {
+      return {
+        userForm: { // 会员管理列表请求信息
+          nickname: '',
+          pageNo: 1,
+          limit: 10,
+          id: '',
+          level: 0,
+          gender: 2,
+          status: 0
+        },
+        Gender: [ // 搜索性别
+          {
+            value: 1,
+            name: '女'
+          },
+          {
+            value: 2,
+            name: '男'
+          },
+          {
+            value: '',
+            name: '全部'
+          }
+        ],
+        evelDic: [{ // 搜索权限
+            value: 0,
+            name: '普通会员'
+          },
+          {
+            value: 1,
+            name: 'VIP会员'
+          },
+          {
+            value: '',
+            name: '全部'
+          }
+        ],
+        statusDic: [{ // 搜索状态
+            value: 0,
+            name: '冻结'
+          },
+          {
+            value: 1,
+            name: '激活'
+          },
+          {
+            value: '',
+            name: '全部'
+          }
+        ],
+        tableData: { // 返回的数据
+          items: [],
+          total: 0
+        },
+        addForm: { // 添加修改会员所需的数据
+          avatarUrl: '',
+          gender: '',
+          gmtCreate: '',
+          gmtLastLogin: '',
+          gmtUpdate: '',
+          id: '',
+          lastLoginIp: '',
+          level: '',
+          loginType: '',
+          nickname: '',
+          openId: '',
+          password: '',
+          phone: '',
+          status: ''
+        },
+        index: 0, // 点击tab列表中的按钮的位置
+        show: false, // 弹出框的显隐
+        title: '创建', // 弹出框的标题
+        STatus: null
+      }
+    },
+    mounted() {
+      this.load()
+    },
+    methods: {
+      load() {
+        const that = this
+        userList(that.userForm).then(function(reds) {
+          that.tableData.total = reds.data.data.count
+          that.tableData.items = reds.data.data.items
+        })
       },
-      Gender: [ // 搜索性别
-        {
-          value: 1,
-          name: '女'
-        },
-        {
-          value: 2,
-          name: '男'
-        },
-        {
-          value: '',
-          name: '全部'
+      handleSizeChange(e) { // 点击控制页数
+        this.userForm.limit = e
+        this.load()
+      },
+      handleCurrentChange(e) { // 输入框控制页数
+        this.userForm.pageNo = e
+        this.load()
+      },
+      GENDER(gender) {
+        switch (gender) {
+          case 1:
+            gender = '女'
+            break
+          case 2:
+            gender = '男'
+            break
+          default:
+            gender = '未知性别'
+            break
         }
-      ],
-      evelDic: [{ // 搜索权限
-        value: 0,
-        name: '普通会员'
+        return gender
       },
-      {
-        value: 1,
-        name: 'VIP会员'
+      LV(level) {
+        switch (level) {
+          case 0:
+            level = '普通会员'
+            break
+          case 1:
+            level = 'VIP会员'
+            break
+          default:
+            level = '全部'
+            break
+        }
+        return level
       },
-      {
-        value: '',
-        name: '全部'
-      }
-      ],
-      statusDic: [{ // 搜索状态
-        value: 0,
-        name: '冻结'
+      Status(status) {
+        switch (status) {
+          case 0:
+            status = '冻结'
+            break
+          case 1:
+            status = '激活'
+            break
+          default:
+            status = '全部'
+            break
+        }
+        return status
       },
-      {
-        value: 1,
-        name: '激活'
+      GmtLastLogin(gmtLastLogin) {
+        var date = new Date(gmtLastLogin) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
+        var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '月'
+        var D = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate()) + '日'
+        var h = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours()) + '时'
+        var m = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()) + '分'
+        gmtLastLogin = M + D + h + m
+        return gmtLastLogin
       },
-      {
-        value: '',
-        name: '全部'
-      }
-      ],
-      tableData: { // 返回的数据
-        items: [],
-        total: 0
-      },
-      addForm: { // 添加修改会员所需的数据
-        avatarUrl: '',
-        gender: '',
-        gmtCreate: '',
-        gmtLastLogin: '',
-        gmtUpdate: '',
-        id: '',
-        lastLoginIp: '',
-        level: '',
-        loginType: '',
-        nickname: '',
-        openId: '',
-        password: '',
-        phone: '',
-        status: ''
-      },
-      index: 0, // 点击tab列表中的按钮的位置
-      show: false, // 弹出框的显隐
-      title: '创建', // 弹出框的标题
-      STatus: null
-    }
-  },
-  mounted () {
-    this.load()
-  },
-  methods: {
-    load () {
-      const that = this
-      userList(that.userForm).then(function (reds) {
-        that.tableData.total = reds.data.data.count
-        that.tableData.items = reds.data.data.items
-      })
-    },
-    handleSizeChange (e) { // 点击控制页数
-      this.userForm.limit = e
-      this.load()
-    },
-    handleCurrentChange (e) { // 输入框控制页数
-      this.userForm.pageNo = e
-      this.load()
-    },
-    GENDER (gender) {
-      switch (gender) {
-        case 1:
-          gender = '女'
-          break
-        case 2:
-          gender = '男'
-          break
-        default:
-          gender = '未知性别'
-          break
-      }
-      return gender
-    },
-    LV (level) {
-      switch (level) {
-        case 0:
-          level = '普通会员'
-          break
-        case 1:
-          level = 'VIP会员'
-          break
-        default:
-          level = '全部'
-          break
-      }
-      return level
-    },
-    Status (status) {
-      switch (status) {
-        case 0:
-          status = '冻结'
-          break
-        case 1:
-          status = '激活'
-          break
-        default:
-          status = '全部'
-          break
-      }
-      return status
-    },
-    GmtLastLogin (gmtLastLogin) {
-      var date = new Date(gmtLastLogin) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
-      var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '月'
-      var D = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate()) + '日'
-      var h = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours()) + '时'
-      var m = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()) + '分'
-      gmtLastLogin = M + D + h + m
-      return gmtLastLogin
-    },
-    statusUpdate (row) { // 改变用户状态
-      const that = this
-      if (row.row.status === 0) {
-        this.STatus = 1
-      } else {
-        this.STatus = 0
-      }
-      status(row.row.id, this.STatus).then(function (reds) {
-        if (reds.data.errmsg === '成功') {
-          that.$message({
-            showClose: true,
-            message: '修改成功',
-            type: 'success'
-          })
-          that.load()
+      statusUpdate(row) { // 改变用户状态
+        const that = this
+        if (row.row.status === 0) {
+          this.STatus = 1
         } else {
-          that.$message({
-            showClose: true,
-            message: reds.data.errmsg,
-            type: 'error'
-          })
+          this.STatus = 0
         }
-      })
-    },
-    handleDelete (row) { // 删除会员
-      const that = this
-      this.index = row.$index
-      this.$confirm('此操作将永久删除该角色---' + row.row.nickname + '---, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        deleteUser(row.row.id, row.row.nickname).then(function (reds) {
+        status(row.row.id, this.STatus).then(function(reds) {
           if (reds.data.errmsg === '成功') {
-            that.tableData.items.splice(that.index, 1)
-            that.$message({
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
               showClose: true,
-              message: '删除成功',
+              message: '修改成功',
               type: 'success'
             })
-            if (that.tableData.items.length < 2) {
-              that.load()
-            }
+            that.load()
           } else {
-            that.$message({
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
               showClose: true,
               message: reds.data.errmsg,
               type: 'error'
             })
-            that.load()
           }
         })
-      })
-    },
-    AddUser () { // 点击创建
-      this.title = '创建'
-      this.show = true
-      this.addForm = {
-        nickname: '',
-        phone: '',
-        level: '',
-        gender: '',
-        password: '',
-        status: '',
-        avatarUrl: ''
+      },
+      handleDelete(row) { // 删除会员
+        const that = this
+        this.index = row.$index
+        this.$confirm('此操作将永久删除该角色---' + row.row.nickname + '---, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          deleteUser(row.row.id, row.row.nickname).then(function(reds) {
+            if (reds.data.errmsg === '成功') {
+              that.tableData.items.splice(that.index, 1)
+              that.mess ? that.mess.close() : ''
+              that.mess = that.$message({
+                showClose: true,
+                message: '删除成功',
+                type: 'success'
+              })
+              if (that.tableData.items.length < 2) {
+                that.load()
+              }
+            } else {
+              that.mess ? that.mess.close() : ''
+              that.mess = that.$message({
+                showClose: true,
+                message: reds.data.errmsg,
+                type: 'error'
+              })
+              that.load()
+            }
+          })
+        })
+      },
+      AddUser() { // 点击创建
+        this.title = '创建'
+        this.show = true
+        this.addForm = {
+          nickname: '',
+          phone: '',
+          level: '',
+          gender: '',
+          password: '',
+          status: '',
+          avatarUrl: ''
+        }
+      },
+      handleUpdate(row) { // 点击编辑
+        console.log(row)
+        this.title = '编辑'
+        row = JSON.stringify(row.row)
+        this.addForm = JSON.parse(row)
+        this.show = true
+      },
+      userUPDATE() { // 修改会员
+        const that = this
+        that.show = false
+        updateUser(this.addForm).then(function(reds) {
+          if (reds.data.errmsg === '成功') {
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
+              showClose: true,
+              message: '修改成功',
+              type: 'success'
+            })
+            that.load()
+          } else {
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
+              showClose: true,
+              message: reds.data.errmsg,
+              type: 'error'
+            })
+          }
+        })
+      },
+      userADD() { // 添加会员
+        const that = this
+        addUser(this.addForm).then(function(reds) {
+          console.log(reds.data.data)
+          if (reds.data.errmsg === '成功') {
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
+              showClose: true,
+              message: '添加成功',
+              type: 'success'
+            })
+            // that.load()
+          } else {
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
+              showClose: true,
+              message: reds.data.errmsg,
+              type: 'error'
+            })
+          }
+        })
       }
-    },
-    handleUpdate (row) { // 点击编辑
-      console.log(row)
-      this.title = '编辑'
-      row = JSON.stringify(row.row)
-      this.addForm = JSON.parse(row)
-      this.show = true
-    },
-    userUPDATE () { // 修改会员
-      const that = this
-      that.show = false
-      updateUser(this.addForm).then(function (reds) {
-        if (reds.data.errmsg === '成功') {
-          that.$message({
-            showClose: true,
-            message: '修改成功',
-            type: 'success'
-          })
-          that.load()
-        } else {
-          that.$message({
-            showClose: true,
-            message: reds.data.errmsg,
-            type: 'error'
-          })
-        }
-      })
-    },
-    userADD () { // 添加会员
-      const that = this
-      addUser(this.addForm).then(function (reds) {
-        console.log(reds.data.data)
-        if (reds.data.errmsg === '成功') {
-          that.$message({
-            showClose: true,
-            message: '添加成功',
-            type: 'success'
-          })
-          // that.load()
-        } else {
-          that.$message({
-            showClose: true,
-            message: reds.data.errmsg,
-            type: 'error'
-          })
-        }
-      })
     }
   }
-}
 </script>
 
 <style scoped="scoped">

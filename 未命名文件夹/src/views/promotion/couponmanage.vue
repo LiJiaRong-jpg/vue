@@ -26,7 +26,7 @@
 
       <el-table-column align="center" label="优惠券类型" prop="type">
         <template slot-scope="scope">
-          {{scope.row.type=="1"?"满减劵":"全部"}}
+          <span>{{scope.row.type=="1"?"满减劵":"全部"}}</span>
         </template>
       </el-table-column>
 
@@ -42,11 +42,11 @@
       </el-table-column>
 
       <el-table-column align="center" label="满减金额" prop="discount">
-        <template slot-scope="scope">减免{{ scope.row.discount }}元</template>
+        <template slot-scope="scope"><span>减免{{ scope.row.discount }}元</span></template>
       </el-table-column>
 
       <el-table-column align="center" label="最低消费" prop="min">
-        <template slot-scope="scope">满{{ scope.row.min }}元可用</template>
+        <template slot-scope="scope"><span>满{{ scope.row.min }}元可用</span></template>
       </el-table-column>
 
       <el-table-column align="center" label="状态" prop="status">
@@ -75,12 +75,12 @@
       </el-table-column>
       <el-table-column align="center" label="领券开始时间" prop="gmtStart">
         <template slot-scope='scope'>
-          {{time(scope.row.gmtStart)}}
+          <span> {{time(scope.row.gmtStart)}}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="领券结束时间" prop="gmtEnd">
         <template slot-scope='scope'>
-          {{time(scope.row.gmtEnd)}}
+          <span>{{time(scope.row.gmtEnd)}}</span>
         </template>
       </el-table-column>
 
@@ -88,11 +88,8 @@
         <template slot-scope="scope">
           <el-button type="primary" size="mini" @click="UpdateStatus(scope)">{{scope.row.status==0?"激活":"冻结"}}
           </el-button>
-          <!-- @click="handleStatus(scope.row)" -->
           <el-button type="primary" size="mini" @click="handleUpdate(scope)">编辑</el-button>
-          <!-- @click="handleRead(scope.row)" -->
           <el-button type="danger" size="mini" @click="deleteRow(scope)">删除</el-button>
-          <!-- @click="handleDelete(scope.row)" -->
         </template>
       </el-table-column>
     </el-table>
@@ -318,7 +315,8 @@
           deleteCou(row.row.id).then(function(reds) {
             if (reds.data.errmsg === '成功') {
               that.tableData.items.splice(that.index, 1)
-              that.$message({
+              that.mess ? that.mess.close() : ''
+              that.mess = that.$message({
                 showClose: true,
                 message: '删除成功',
                 type: 'success'
@@ -327,7 +325,8 @@
                 that.load()
               }
             } else {
-              that.$message({
+              that.mess ? that.mess.close() : ''
+              that.mess = that.$message({
                 showClose: true,
                 message: reds.data.errmsg,
                 type: 'error'
@@ -346,10 +345,12 @@
         }
         updateStatus(row.row).then(function(reds) {
           if (reds.data.errmsg === '成功') {
-            that.$message({
+            that.mess ? that.mess.close() : ''
+            that.mess = that.$message({
               showClose: true,
               message: '修改成功',
-              type: 'success'
+              type: 'success',
+              duration: 1000
             })
             that.load()
           } else {
@@ -404,6 +405,16 @@
         this.show = true
       },
       couADD() { // 添加优惠劵
+        if (this.addForm.timeType == 0) {
+          this.addForm.gmtStart = ''
+          this.addForm.gmtEnd = ''
+        } else {
+          this.addForm.days = ''
+          var start = new Date(this.addForm.gmtStart);
+          var end = new Date(this.addForm.gmtEnd);
+          this.addForm.gmtStart = start.getTime();
+          this.addForm.gmtEnd = end.getTime();
+        }
         if (this.addForm.title.trim() !== '') {
           if (this.addForm.total !== '') {
             if (this.addForm.limit !== '') {
@@ -475,6 +486,16 @@
         })
       },
       couPUDARE() {
+        if (this.addForm.timeType == 0) {
+          this.addForm.gmtStart = ''
+          this.addForm.gmtEnd = ''
+        } else {
+          this.addForm.days = ''
+          var start = new Date(this.addForm.gmtStart);
+          var end = new Date(this.addForm.gmtEnd);
+          this.addForm.gmtStart = start.getTime();
+          this.addForm.gmtEnd = end.getTime();
+        }
         if (this.addForm.title.trim() !== '') {
           if (this.addForm.total !== '') {
             if (this.addForm.limit !== '') {

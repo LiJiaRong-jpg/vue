@@ -1,6 +1,5 @@
 import Qs from 'qs'
 import axios from '../HTTP.js'
-
 // 获取商铺信息
 export function form (data) {
   return axios({
@@ -11,7 +10,6 @@ export function form (data) {
     }
   })
 }
-
 // 更改商铺信息
 export function Updata (FORM) {
   return axios({
@@ -25,5 +23,13 @@ export function Updata (FORM) {
       address:FORM.address,
       showType:FORM.showType
     })
+  })
+}
+// 更改商铺图片
+export function UpdataImg (img) {
+  return axios({
+    method: "post",
+    url:"http://192.168.1.54:8081/upload/admin",
+    ...img
   })
 }

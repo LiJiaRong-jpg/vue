@@ -438,7 +438,7 @@
           }
         })
       },
-      Delete(row) {//删除广告
+      Delete(row) { //删除广告
         const that = this
         this.$confirm('此操作将永久删除该广告---' + row.title + '---, 是否继续?', '提示', {
           confirmButtonText: '确定',
